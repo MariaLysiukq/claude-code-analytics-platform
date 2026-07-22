@@ -44,5 +44,17 @@ services:
       etl:
         condition: service_completed_successfully
 
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    environment:
+      API_BASE_URL: http://api:8000/api/v1
+    ports:
+      - "8501:8501"
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   pgdata:

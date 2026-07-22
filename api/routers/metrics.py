@@ -14,11 +14,13 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from api.schemas.metrics import (
     ActiveUsersByDay,
+    CostByDay,
     CostByModel,
     CostByPractice,
     ErrorRatesResponse,
     ErrorTypeBreakdown,
     SessionStats,
+    StatusCodeBreakdown,
     ToolReliability,
 )
 
@@ -99,6 +101,32 @@ async def cost_by_practice(
     async with pool.acquire() as connection:
         rows = await connection.fetch(query, range.start, range.end)
     return [CostByPractice(**row) for row in rows]
+
+
+@router.get("/cost-by-day", response_model=list[CostByDay])
+async def cost_by_day(
+    request: Request, range: DateRange = Depends(date_range)
+) -> list[CostByDay]:
+    """Daily spend and token usage, for a historical cost trend line."""
+    pool: asyncpg.Pool = request.app.state.pool
+    query = """
+        SELECT
+            date_trunc('day', event_timestamp)::date AS activity_date,
+            COUNT(*) AS request_count,
+            COALESCE(
+                SUM(COALESCE(input_tokens, 0) + COALESCE(output_tokens, 0)), 0
+            )::bigint AS total_tokens,
+            COALESCE(SUM(cost_usd), 0)::float8 AS total_cost_usd
+        FROM fact_api_requests
+        WHERE event_timestamp IS NOT NULL
+          AND ($1::timestamptz IS NULL OR event_timestamp >= $1)
+          AND ($2::timestamptz IS NULL OR event_timestamp < $2)
+        GROUP BY 1
+        ORDER BY 1
+    """
+    async with pool.acquire() as connection:
+        rows = await connection.fetch(query, range.start, range.end)
+    return [CostByDay(**row) for row in rows]
 
 
 @router.get("/tool-reliability", response_model=list[ToolReliability])
@@ -196,6 +224,27 @@ async def error_rates(
         error_rate=error_rate,
         by_type=[ErrorTypeBreakdown(**row) for row in breakdown_rows],
     )
+
+
+@router.get("/status-codes", response_model=list[StatusCodeBreakdown])
+async def status_codes(
+    request: Request, range: DateRange = Depends(date_range)
+) -> list[StatusCodeBreakdown]:
+    """HTTP status code distribution across API errors."""
+    pool: asyncpg.Pool = request.app.state.pool
+    query = """
+        SELECT
+            status_code,
+            COUNT(*) AS error_count
+        FROM fact_api_errors
+        WHERE ($1::timestamptz IS NULL OR event_timestamp >= $1)
+          AND ($2::timestamptz IS NULL OR event_timestamp < $2)
+        GROUP BY status_code
+        ORDER BY error_count DESC
+    """
+    async with pool.acquire() as connection:
+        rows = await connection.fetch(query, range.start, range.end)
+    return [StatusCodeBreakdown(**row) for row in rows]
 
 
 @router.get("/session-stats", response_model=SessionStats)

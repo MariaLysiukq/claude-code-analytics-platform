@@ -58,6 +58,18 @@ class ErrorRatesResponse(BaseModel):
     by_type: list[ErrorTypeBreakdown]
 
 
+class StatusCodeBreakdown(BaseModel):
+    status_code: Optional[int] = None
+    error_count: int
+
+
+class CostByDay(BaseModel):
+    activity_date: date
+    request_count: int
+    total_tokens: int
+    total_cost_usd: float
+
+
 class SessionStats(BaseModel):
     total_sessions: int
     avg_duration_seconds: float
