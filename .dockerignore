@@ -11,6 +11,9 @@ __pycache__
 .env.example
 data
 db
-dashboard
-*.docx
+output
+*.log
+.vscode
+.idea
 PROJECT_PLAN.md
+*.docx
