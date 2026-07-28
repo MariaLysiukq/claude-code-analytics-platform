@@ -27,10 +27,3 @@ async def create_pool(settings: Settings) -> asyncpg.Pool:
 async def close_pool(pool: asyncpg.Pool) -> None:
     await pool.close()
     logger.info("Postgres connection pool closed")
-
-
-async def get_connection(request: Request) -> AsyncIterator[asyncpg.Connection]:
-    """FastAPI dependency yielding a connection from the app-wide pool."""
-    pool: asyncpg.Pool = request.app.state.pool
-    async with pool.acquire() as connection:
-        yield connection
