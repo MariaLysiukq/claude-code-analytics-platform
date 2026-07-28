@@ -128,8 +128,6 @@ anywhere — must be derived.
 
 - Talks only to Postgres. The dashboard talks only to this API — clean
   separation, and the API is an explicit graded deliverable, not just a DB view.
-- Raw resource endpoints: `/employees`, `/sessions`, `/events` (paginated,
-  filterable).
 - Aggregate analytics endpoints: `/analytics/cost-by-model`,
   `/analytics/cost-by-practice`, `/analytics/tool-reliability`,
   `/analytics/active-users`, `/analytics/error-rates`,
