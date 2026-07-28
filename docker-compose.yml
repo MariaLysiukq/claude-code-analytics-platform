@@ -5,8 +5,8 @@ services:
       - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-analytics}
-    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-    POSTGRES_DB: ${POSTGRES_DB:-claude_code_analytics}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-claude_code_analytics}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
