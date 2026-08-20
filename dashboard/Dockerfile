@@ -1,4 +1,3 @@
-# Build context: dashboard/ (docker compose build context: ./dashboard)
 FROM python:3.12-slim AS builder
 
 WORKDIR /app
@@ -14,14 +13,13 @@ FROM python:3.12-slim
 RUN groupadd -r app && useradd -r -g app -d /app -s /sbin/nologin app
 
 WORKDIR /app
-COPY --from=builder /root/.local /app/.local
-COPY app.py .
+COPY --chown=app:app --from=builder /root/.local /app/.local
+COPY --chown=app:app app.py .
 
 ENV PATH=/app/.local/bin:$PATH \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-RUN chown -R app:app /app
 USER app
 
 EXPOSE 8501

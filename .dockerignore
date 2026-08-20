@@ -17,3 +17,5 @@ output
 .idea
 PROJECT_PLAN.md
 *.docx
+data/*.jsonl
+.pytest_cache
