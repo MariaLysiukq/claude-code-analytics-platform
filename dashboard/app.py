@@ -61,7 +61,7 @@ def _request(endpoint: str, params: dict) -> object:
             response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT_SECONDS)
             response.raise_for_status()
             return response.json()
-        except requests.exceptions.RequestException as exc:
+        except (requests.exceptions.RequestException, ValueError) as exc:
             last_error = exc
             if attempt < RETRY_ATTEMPTS - 1:
                 time.sleep(RETRY_BACKOFF_SECONDS)
@@ -99,15 +99,22 @@ def check_api_health() -> bool:
 
 
 def fmt_usd(value: float) -> str:
-    return f"${value:,.2f}"
+    return f"${value:,.2f}" if value is not None else "$0.00"
 
 
 def fmt_int(value: float) -> str:
-    return f"{value:,.0f}"
+    return f"{value:,.0f}" if value is not None else "0"
 
 
 def fmt_pct(value: float) -> str:
-    return f"{value * 100:.1f}%"
+    return f"{value * 100:.1f}%" if value is not None else "0.0%"
+
+
+def safe_int_status(code):
+    try:
+        return str(int(code))
+    except (ValueError, TypeError):
+        return "Unknown"
 
 
 def style_fig(fig):
@@ -172,8 +179,8 @@ def render_executive_view():
     cost_by_model = fetch("/analytics/cost-by-model", date_params, "cost by model")
     cost_by_practice = fetch("/analytics/cost-by-practice", date_params, "cost by practice")
 
-    total_spend = sum(row["total_cost_usd"] for row in cost_by_model) if cost_by_model else 0.0
-    total_requests = sum(row["request_count"] for row in cost_by_model) if cost_by_model else 0
+    total_spend = sum(row.get("total_cost_usd", 0.0) or 0.0 for row in cost_by_model) if cost_by_model else 0.0
+    total_requests = sum(row.get("request_count", 0) or 0 for row in cost_by_model) if cost_by_model else 0
     avg_cost = total_spend / total_requests if total_requests else 0.0
 
     col1, col2, col3 = st.columns(3)
@@ -248,10 +255,10 @@ def render_engineering_view():
     st.subheader("Token consumption")
     if cost_by_model:
         df = pd.DataFrame(cost_by_model)
-        total_input = df["total_input_tokens"].sum()
-        total_output = df["total_output_tokens"].sum()
-        total_cache_read = df["total_cache_read_tokens"].sum()
-        total_cache_creation = df["total_cache_creation_tokens"].sum()
+        total_input = df["total_input_tokens"].sum() if "total_input_tokens" in df else 0
+        total_output = df["total_output_tokens"].sum() if "total_output_tokens" in df else 0
+        total_cache_read = df["total_cache_read_tokens"].sum() if "total_cache_read_tokens" in df else 0
+        total_cache_creation = df["total_cache_creation_tokens"].sum() if "total_cache_creation_tokens" in df else 0
 
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Input tokens", fmt_int(total_input))
@@ -271,7 +278,7 @@ def render_engineering_view():
             "total_cache_read_tokens": "cache_read_tokens",
             "total_cache_creation_tokens": "cache_creation_tokens",
         }).melt(
-            id_vars=["model"], value_vars=list(token_cols.keys()),
+            id_vars=["model"], value_vars=[col for col in token_cols.keys() if col in df.columns or f"total_{col}" in df.columns],
             var_name="token_type", value_name="tokens",
         )
         long_df["token_type"] = long_df["token_type"].map(token_cols)
@@ -292,17 +299,20 @@ def render_engineering_view():
     st.subheader("Tool execution success rates")
     if tool_reliability:
         df = pd.DataFrame(tool_reliability)
-        df = df[df["success_rate"].notna()].sort_values("success_rate")
-        fig = px.bar(
-            df, x="success_rate", y="tool_name", orientation="h",
-            text=df["success_rate"].map(fmt_pct),
-            labels={"success_rate": "Success rate", "tool_name": ""},
-        )
-        fig.update_traces(marker_color=BLUE, textposition="outside")
-        fig.update_xaxes(tickformat=".0%", range=[0, 1.08])
-        st.plotly_chart(style_fig(fig), use_container_width=True)
-        with st.expander("View data as table"):
-            st.dataframe(df, use_container_width=True, hide_index=True)
+        if "success_rate" in df.columns:
+            df = df[df["success_rate"].notna()].sort_values("success_rate")
+            fig = px.bar(
+                df, x="success_rate", y="tool_name", orientation="h",
+                text=df["success_rate"].map(fmt_pct),
+                labels={"success_rate": "Success rate", "tool_name": ""},
+            )
+            fig.update_traces(marker_color=BLUE, textposition="outside")
+            fig.update_xaxes(tickformat=".0%", range=[0, 1.08])
+            st.plotly_chart(style_fig(fig), use_container_width=True)
+            with st.expander("View data as table"):
+                st.dataframe(df, use_container_width=True, hide_index=True)
+        else:
+            st.info("No success rate metric found in tool reliability response.")
     else:
         st.info("No tool reliability data for the selected range.")
 
@@ -312,11 +322,11 @@ def render_engineering_view():
     with col_left:
         if error_rates:
             e1, e2, e3 = st.columns(3)
-            e1.metric("Error rate", fmt_pct(error_rates["error_rate"]))
-            e2.metric("Total requests", fmt_int(error_rates["total_requests"]))
-            e3.metric("Total errors", fmt_int(error_rates["total_errors"]))
+            e1.metric("Error rate", fmt_pct(error_rates.get("error_rate")))
+            e2.metric("Total requests", fmt_int(error_rates.get("total_requests")))
+            e3.metric("Total errors", fmt_int(error_rates.get("total_errors")))
 
-            if error_rates["by_type"]:
+            if error_rates.get("by_type"):
                 df = pd.DataFrame(error_rates["by_type"]).sort_values("error_count")
                 fig = px.bar(
                     df, x="error_count", y="error_type", orientation="h",
@@ -336,18 +346,18 @@ def render_engineering_view():
         st.markdown("**HTTP status code distribution**")
         if status_codes:
             df = pd.DataFrame(status_codes)
-            df["status_label"] = df["status_code"].apply(
-                lambda code: str(int(code)) if pd.notna(code) else "Unknown"
-            )
+            df["status_label"] = df["status_code"].apply(safe_int_status)
 
             def status_color(code):
-                if pd.isna(code):
+                try:
+                    c = int(code)
+                    if 500 <= c < 600:
+                        return STATUS_CRITICAL
+                    if 400 <= c < 500:
+                        return STATUS_WARNING
+                    return STATUS_GOOD
+                except (ValueError, TypeError):
                     return MUTED_INK
-                if 500 <= code < 600:
-                    return STATUS_CRITICAL
-                if 400 <= code < 500:
-                    return STATUS_WARNING
-                return STATUS_GOOD
 
             df["color"] = df["status_code"].apply(status_color)
             df = df.sort_values("error_count")
