@@ -16,6 +16,7 @@ RUN groupadd -r app && useradd -r -g app -d /app -s /sbin/nologin app
 WORKDIR /app
 COPY --from=builder /root/.local /app/.local
 COPY api ./api
+COPY tests ./tests
 
 ENV PATH=/app/.local/bin:$PATH \
     PYTHONDONTWRITEBYTECODE=1 \
