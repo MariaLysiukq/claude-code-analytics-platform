@@ -116,7 +116,7 @@ docker compose run --rm etl python -m etl.load_data --truncate
 
 ---
 
-## 📁 Project Layout
+## Project Layout
 
 ```text
 .
@@ -200,7 +200,7 @@ Located in `etl/load_data.py`:
 
 ---
 
-## 🌐 REST API Reference
+## REST API Reference
 
 The FastAPI web service executes aggregate calculations in PostgreSQL rather than application memory.
 
