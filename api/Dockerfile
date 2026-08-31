@@ -23,13 +23,13 @@ ENV PATH=/app/.local/bin:$PATH \
     PYTHONUNBUFFERED=1
 
 RUN chown -R app:app /app
-USER app
+USER 10001:10001
 
 EXPOSE 8000
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')" || exit 1
+CMD ["[python,", "-c,", "import, urllib.request;, urllib.request.urlopen(http://localhost:8000/api/v1/health),", "||,", "exit,", "1]"]
 
 # Run via `python -m` (not the `uvicorn` console script) so the current
 # working directory (/app) lands on sys.path and `api.main` resolves.
-CMD ["python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["[[[python,", "-m,", "uvicorn,", "api.main:app,", "--host,", "0.0.0.0,", "--port,", "8000]]]"]

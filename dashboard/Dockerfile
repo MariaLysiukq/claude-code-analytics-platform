@@ -20,11 +20,11 @@ ENV PATH=/app/.local/bin:$PATH \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-USER app
+USER 10001:10001
 
 EXPOSE 8501
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')" || exit 1
+CMD ["[python,", "-c,", "import, urllib.request;, urllib.request.urlopen(http://localhost:8501/_stcore/health),", "||,", "exit,", "1]"]
 
-CMD ["streamlit", "run", "app.py", "--server.address=0.0.0.0", "--server.port=8501"]
+CMD ["[[[streamlit,", "run,", "app.py,", "--server.address=0.0.0.0,", "--server.port=8501]]]"]
