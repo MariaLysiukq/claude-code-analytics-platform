@@ -1,0 +1,56 @@
+# .pre-commit-config.yaml
+default_language_version:
+  python: python3
+
+default_stages: [pre-commit]
+
+repos:
+  # General File & Git Hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+        exclude: ^.*\.jsonl$
+      - id: check-added-large-files
+        args: ['--maxkb=60000']
+      - id: check-merge-conflict
+      - id: check-ast
+      - id: debug-statements
+      - id: detect-private-key
+
+  # Python Code Style & Auto-Formatting (Replaces Black, Flake8, isort)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # Static Type Checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - pydantic>=2.0
+          - types-psycopg2
+          - types-requests
+          - pandas-stubs
+        args: [--ignore-missing-imports]
+
+  # SQL Schema & Query Linting
+  - repo: https://github.com/sqlfluff/sqlfluff
+    rev: 3.1.0
+    hooks:
+      - id: sqlfluff-lint
+        args: [--dialect, postgres]
+        files: ^.*\.sql$
+
+  # Dockerfile Best Practices & Security
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker

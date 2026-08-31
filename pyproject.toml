@@ -1,0 +1,64 @@
+# pyproject.toml
+
+[tool.ruff]
+# Target Python version matching the application runtime
+target-version = "py311"
+
+# Maximum line length for code and comments
+line-length = 100
+
+# Directory paths to exclude from linting and formatting
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "data",
+]
+
+[tool.ruff.lint]
+# Rule set selection:
+# E/W (pycodestyle), F (Pyflakes), I (isort), B (flake8-bugbear),
+# UP (pyupgrade), N (pep8-naming), C4 (flake8-comprehensions), SIM (flake8-simplify), T20 (print statements)
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort import ordering
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+    "T20", # print statements
+]
+
+# Rule suppressions
+ignore = [
+    "E501", # Line length enforcement handled by ruff format
+    "B008", # Allow function calls in default arguments (required for FastAPI Depends/Query)
+]
+
+# Treat variables with leading underscores as intentionally unused
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["api", "etl"]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow print statements in standalone CLI tools and ETL execution scripts
+"generate_fake_data.py" = ["T201"]
+"load_data.py" = ["T201"]
+# Allow unused imports in package initializers
+"__init__.py" = ["F401"]
+# Allow assertions in unit tests
+"test_*.py" = ["S101"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

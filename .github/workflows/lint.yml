@@ -1,0 +1,26 @@
+# .github/workflows/lint.yml
+name: Linting & Formatting
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  ruff:
+    name: Ruff Code Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Ruff Linter
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check"
+
+      - name: Verify Code Formatting
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "format --check"
