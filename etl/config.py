@@ -1,4 +1,5 @@
 """Environment/config loading for the ETL pipeline."""
+
 import os
 from pathlib import Path
 
@@ -22,9 +23,7 @@ DATABASE_URL = os.environ.get(
 
 DATA_DIR = Path(os.environ.get("ETL_DATA_DIR", REPO_ROOT / "data"))
 EMPLOYEES_CSV = Path(os.environ.get("ETL_EMPLOYEES_CSV", DATA_DIR / "employees.csv"))
-TELEMETRY_JSONL = Path(
-    os.environ.get("ETL_TELEMETRY_JSONL", DATA_DIR / "telemetry_logs.jsonl")
-)
+TELEMETRY_JSONL = Path(os.environ.get("ETL_TELEMETRY_JSONL", DATA_DIR / "telemetry_logs.jsonl"))
 
 # Rows accumulated per table before an executemany/execute_values flush.
 BATCH_SIZE = int(os.environ.get("ETL_BATCH_SIZE", "2000"))

@@ -6,9 +6,11 @@ second time to get at `body` / `attributes` / `scope` / `resource`.
 Malformed lines/events are logged and skipped rather than raising, so one
 bad record doesn't abort the whole load.
 """
+
 import json
 import logging
-from typing import Iterator, NamedTuple, Optional
+from collections.abc import Iterator
+from typing import NamedTuple
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,7 @@ class ParsedEvent(NamedTuple):
     attributes: dict  # snake_case-normalized attributes
     resource: dict  # snake_case-normalized resource
     payload: dict  # full original parsed message (for raw_events JSONB)
-    log_timestamp_ms: Optional[int]
+    log_timestamp_ms: int | None
 
 
 def _normalize(d: dict, key_map: dict) -> dict:
@@ -57,7 +59,7 @@ def _normalize(d: dict, key_map: dict) -> dict:
 
 def iter_parsed_events(path) -> Iterator[ParsedEvent]:
     """Stream-parse `path`, yielding one ParsedEvent per logEvents[] entry."""
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for line_no, line in enumerate(f, start=1):
             line = line.strip()
             if not line:
@@ -72,9 +74,7 @@ def iter_parsed_events(path) -> Iterator[ParsedEvent]:
                 event_id = log_event.get("id")
                 raw_message = log_event.get("message")
                 if not event_id or not raw_message:
-                    logger.warning(
-                        "line %d: logEvent missing id/message, skipping", line_no
-                    )
+                    logger.warning("line %d: logEvent missing id/message, skipping", line_no)
                     continue
                 try:
                     message = json.loads(raw_message)
@@ -89,9 +89,7 @@ def iter_parsed_events(path) -> Iterator[ParsedEvent]:
 
                 body = message.get("body")
                 if not body:
-                    logger.warning(
-                        "line %d: event %s missing body, skipping", line_no, event_id
-                    )
+                    logger.warning("line %d: event %s missing body, skipping", line_no, event_id)
                     continue
 
                 attributes = _normalize(message.get("attributes", {}) or {}, ATTR_KEY_MAP)

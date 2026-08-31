@@ -23,7 +23,7 @@ ENV PATH=/app/.local/bin:$PATH \
 
 # data/ is bind-mounted at runtime (see docker-compose.yml), not baked into the image.
 RUN mkdir -p /app/data && chown -R app:app /app
-USER app
+USER 10001:10001
 
 # One-shot job: loads data/employees.csv + data/telemetry_logs.jsonl into postgres.
 CMD ["python", "-m", "etl.load_data"]

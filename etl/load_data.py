@@ -17,13 +17,15 @@ Processing is two passes over the telemetry file:
 Both passes stream the file line-by-line -- the 57MB source is never fully
 loaded into memory.
 """
+
 import argparse
 import csv
 import logging
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
+from psycopg2.extras import Json
 from pydantic import ValidationError
 
 from . import config, db
@@ -43,9 +45,8 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
     datefmt="%H:%M:%S",
 )
-logger = logging.getLogger("etl.load_data")
 
-from psycopg2.extras import Json
+logger = logging.getLogger("etl.load_data")
 
 # ---------------------------------------------------------------------------
 # SQL
@@ -173,7 +174,7 @@ def parse_event_timestamp(attributes: dict, log_timestamp_ms):
             pass
     if log_timestamp_ms:
         try:
-            return datetime.fromtimestamp(int(log_timestamp_ms) / 1000, tz=timezone.utc)
+            return datetime.fromtimestamp(int(log_timestamp_ms) / 1000, tz=UTC)
         except (ValueError, OSError, OverflowError, TypeError):
             pass
     return None
@@ -186,8 +187,8 @@ class Flusher:
         self.conn = conn
         self.batch_size = batch_size
         self.counters = counters
-        self._buffers = {}
-        self._sql = {}
+        self._buffers: dict[str, list] = {}
+        self._sql: dict[str, str] = {}
 
     def register(self, table: str, sql: str) -> None:
         self._buffers[table] = []
@@ -205,7 +206,9 @@ class Flusher:
             return
         n = db.execute_upsert(self.conn, self._sql[table], buf)
         self.counters.add_sent(table, n)
-        logger.info("  -> %s: flushed %d rows (total sent so far: %d)", table, n, self.counters.sent[table])
+        logger.info(
+            "  -> %s: flushed %d rows (total sent so far: %d)", table, n, self.counters.sent[table]
+        )
         buf.clear()
 
     def flush_all(self) -> None:
@@ -230,7 +233,7 @@ def load_employees(conn, counters: Counters) -> set:
         reader = csv.DictReader(f)
         for line_no, raw_row in enumerate(reader, start=2):
             try:
-                rec = EmployeeRecord(**raw_row)
+                rec = EmployeeRecord(**raw_row)  # type: ignore[arg-type]
             except ValidationError as exc:
                 logger.warning("employees.csv line %d: invalid row, skipping: %s", line_no, exc)
                 counters.add_skipped("dim_employees")
@@ -262,7 +265,11 @@ def build_sessions(conn, counters: Counters, known_emails: set, batch_size: int)
         email = pe.attributes.get("user_email")
         if email and email not in known_emails:
             if email not in unknown_emails_warned:
-                logger.warning("session %s: user_email %r not found in dim_employees, will store as NULL", session_id, email)
+                logger.warning(
+                    "session %s: user_email %r not found in dim_employees, will store as NULL",
+                    session_id,
+                    email,
+                )
                 unknown_emails_warned.add(email)
             email = None
 
@@ -297,9 +304,13 @@ def build_sessions(conn, counters: Counters, known_emails: set, batch_size: int)
             entry["prompt_count"] += 1
 
         if n_events % config.LOG_EVERY_N_LINES == 0:
-            logger.info("  ...scanned %d events, %d distinct sessions so far", n_events, len(sessions))
+            logger.info(
+                "  ...scanned %d events, %d distinct sessions so far", n_events, len(sessions)
+            )
 
-    logger.info("Pass 1/2 done: %d events scanned, %d distinct sessions found", n_events, len(sessions))
+    logger.info(
+        "Pass 1/2 done: %d events scanned, %d distinct sessions found", n_events, len(sessions)
+    )
 
     rows = [
         (
@@ -429,78 +440,86 @@ def load_events(conn, counters: Counters, known_emails: set, batch_size: int) ->
 
         try:
             if pe.event_type == "user_prompt":
-                attrs = UserPromptAttributes(**pe.attributes)
+                prompt_attrs = UserPromptAttributes(**pe.attributes)
                 flusher.add(
                     "fact_user_prompts",
-                    (pe.id, session_id, email, attrs.event_timestamp, attrs.prompt_length),
+                    (
+                        pe.id,
+                        session_id,
+                        email,
+                        prompt_attrs.event_timestamp,
+                        prompt_attrs.prompt_length,
+                    ),
                 )
 
             elif pe.event_type == "api_request":
-                attrs = ApiRequestAttributes(**pe.attributes)
+                req_attrs = ApiRequestAttributes(**pe.attributes)
                 flusher.add(
                     "fact_api_requests",
                     (
                         pe.id,
                         session_id,
                         email,
-                        attrs.event_timestamp,
-                        attrs.model,
-                        attrs.input_tokens,
-                        attrs.output_tokens,
-                        attrs.cache_read_tokens,
-                        attrs.cache_creation_tokens,
-                        attrs.cost_usd,
-                        attrs.duration_ms,
+                        req_attrs.event_timestamp,
+                        req_attrs.model,
+                        req_attrs.input_tokens,
+                        req_attrs.output_tokens,
+                        req_attrs.cache_read_tokens,
+                        req_attrs.cache_creation_tokens,
+                        req_attrs.cost_usd,
+                        req_attrs.duration_ms,
                     ),
                 )
 
             elif pe.event_type == "api_error":
-                attrs = ApiErrorAttributes(**pe.attributes)
+                err_attrs = ApiErrorAttributes(**pe.attributes)
                 flusher.add(
                     "fact_api_errors",
                     (
                         pe.id,
                         session_id,
                         email,
-                        attrs.event_timestamp,
-                        attrs.model,
-                        attrs.error,
-                        attrs.status_code,
-                        attrs.attempt,
-                        attrs.duration_ms,
+                        err_attrs.event_timestamp,
+                        err_attrs.model,
+                        err_attrs.error,
+                        err_attrs.status_code,
+                        err_attrs.attempt,
+                        err_attrs.duration_ms,
                     ),
                 )
 
             elif pe.event_type == "tool_decision":
-                attrs = ToolDecisionAttributes(**pe.attributes)
+                dec_attrs = ToolDecisionAttributes(**pe.attributes)
                 stale = reconciler.add_decision(
                     session_id,
                     {
                         "id": pe.id,
                         "session_id": session_id,
                         "user_email": email,
-                        "tool_name": attrs.tool_name,
-                        "decision": attrs.decision,
-                        "source": attrs.source,
-                        "timestamp": attrs.event_timestamp,
+                        "tool_name": dec_attrs.tool_name,
+                        "decision": dec_attrs.decision,
+                        "source": dec_attrs.source,
+                        "timestamp": dec_attrs.event_timestamp,
                     },
                 )
                 if stale:
                     flusher.add("fact_tool_events", _decision_only_row(stale))
 
             elif pe.event_type == "tool_result":
-                attrs = ToolResultAttributes(**pe.attributes)
-                matched, stale = reconciler.match_result(session_id, attrs.tool_name)
+                res_attrs = ToolResultAttributes(**pe.attributes)
+                matched, stale = reconciler.match_result(session_id, res_attrs.tool_name)
                 if stale:
                     flusher.add("fact_tool_events", _decision_only_row(stale))
                 if matched:
-                    row = _merged_tool_row(matched, pe, attrs, session_id, email)
+                    row = _merged_tool_row(matched, pe, res_attrs, session_id, email)
                 else:
-                    row = _result_only_row(pe, attrs, session_id, email)
+                    row = _result_only_row(pe, res_attrs, session_id, email)
                 flusher.add("fact_tool_events", row)
 
         except ValidationError as exc:
-            logger.warning("event %s (%s): validation failed, skipping typed row: %s", pe.id, pe.body, exc)
+            logger.warning(
+                "event %s (%s): validation failed, skipping typed row: %s", pe.id, pe.body, exc
+            )
             counters.add_skipped(pe.body)
 
         if n_events % config.LOG_EVERY_N_LINES == 0:
@@ -522,8 +541,14 @@ def load_events(conn, counters: Counters, known_emails: set, batch_size: int) ->
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--truncate", action="store_true", help="Truncate all tables before loading (full reset instead of upsert).")
-    parser.add_argument("--batch-size", type=int, default=config.BATCH_SIZE, help="Rows per batch insert.")
+    parser.add_argument(
+        "--truncate",
+        action="store_true",
+        help="Truncate all tables before loading (full reset instead of upsert).",
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=config.BATCH_SIZE, help="Rows per batch insert."
+    )
     args = parser.parse_args(argv)
 
     start = time.monotonic()

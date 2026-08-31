@@ -1,4 +1,5 @@
 """Postgres connection + batched upsert helpers."""
+
 import logging
 
 import psycopg2

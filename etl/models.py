@@ -6,8 +6,8 @@ The source data serializes almost every numeric field as a JSON string
 so a malformed/unexpected value fails validation cleanly and can be
 logged + skipped by the caller instead of blowing up the whole load.
 """
+
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, field_validator
 
@@ -39,27 +39,27 @@ class CommonAttributes(BaseModel):
     """Fields present on every event's `attributes` block."""
 
     event_timestamp: datetime
-    organization_id: Optional[str] = None
-    session_id: Optional[str] = None
-    terminal_type: Optional[str] = None
-    user_email: Optional[str] = None
-    user_id: Optional[str] = None
+    organization_id: str | None = None
+    session_id: str | None = None
+    terminal_type: str | None = None
+    user_email: str | None = None
+    user_id: str | None = None
 
 
 class UserPromptAttributes(CommonAttributes):
-    prompt_length: Optional[int] = None
+    prompt_length: int | None = None
 
     _blank = field_validator("prompt_length", mode="before")(_blank_to_none)
 
 
 class ApiRequestAttributes(CommonAttributes):
-    model: Optional[str] = None
-    input_tokens: Optional[int] = None
-    output_tokens: Optional[int] = None
-    cache_read_tokens: Optional[int] = None
-    cache_creation_tokens: Optional[int] = None
-    cost_usd: Optional[float] = None
-    duration_ms: Optional[int] = None
+    model: str | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    cache_read_tokens: int | None = None
+    cache_creation_tokens: int | None = None
+    cost_usd: float | None = None
+    duration_ms: int | None = None
 
     _blank1 = field_validator(
         "input_tokens",
@@ -74,21 +74,19 @@ class ApiRequestAttributes(CommonAttributes):
 
 class ToolDecisionAttributes(CommonAttributes):
     tool_name: str
-    decision: Optional[str] = None
-    source: Optional[str] = None
+    decision: str | None = None
+    source: str | None = None
 
 
 class ToolResultAttributes(CommonAttributes):
     tool_name: str
-    success: Optional[bool] = None
-    duration_ms: Optional[int] = None
-    decision_source: Optional[str] = None
-    decision_type: Optional[str] = None
-    tool_result_size_bytes: Optional[int] = None
+    success: bool | None = None
+    duration_ms: int | None = None
+    decision_source: str | None = None
+    decision_type: str | None = None
+    tool_result_size_bytes: int | None = None
 
-    _blank = field_validator("duration_ms", "tool_result_size_bytes", mode="before")(
-        _blank_to_none
-    )
+    _blank = field_validator("duration_ms", "tool_result_size_bytes", mode="before")(_blank_to_none)
 
     @field_validator("success", mode="before")
     @classmethod
@@ -99,12 +97,10 @@ class ToolResultAttributes(CommonAttributes):
 
 
 class ApiErrorAttributes(CommonAttributes):
-    model: Optional[str] = None
-    error: Optional[str] = None
-    status_code: Optional[int] = None
-    attempt: Optional[int] = None
-    duration_ms: Optional[int] = None
+    model: str | None = None
+    error: str | None = None
+    status_code: int | None = None
+    attempt: int | None = None
+    duration_ms: int | None = None
 
-    _blank = field_validator("status_code", "attempt", "duration_ms", mode="before")(
-        _blank_to_none
-    )
+    _blank = field_validator("status_code", "attempt", "duration_ms", mode="before")(_blank_to_none)
