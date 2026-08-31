@@ -67,7 +67,7 @@ Container startup sequence is enforced using Compose `depends_on` conditions (`s
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -91,6 +91,8 @@ docker compose up --build
 
 
 3. **Access application endpoints:**
+   text
+```
 | Service | URL | Description |
 | --- | --- | --- |
 | **Streamlit Dashboard** | [http://localhost:8501](http://localhost:8501) | Multi-persona analytics UI |
@@ -98,7 +100,7 @@ docker compose up --build
 | **API Base URL** | `http://localhost:8000/api/v1` | Application REST interface |
 | **API Health Check** | `http://localhost:8000/api/v1/health` | Container health probe |
 | **PostgreSQL Database** | `localhost:5432` | Primary datastore (see `.env`) |
-
+```
 
 
 ### Re-running or Resetting Ingestion
