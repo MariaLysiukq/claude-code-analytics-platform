@@ -1,7 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from fastapi.testclient import TestClient
+
 from api.main import app
+
 
 @pytest.fixture
 def mock_db_pool():
@@ -18,6 +21,7 @@ def mock_db_pool():
     pool.close = AsyncMock()
 
     return pool, mock_conn
+
 
 @pytest.fixture
 def client(mock_db_pool):

@@ -4,10 +4,10 @@ All aggregation is done in SQL against the typed star schema (dim_employees,
 dim_sessions, fact_api_requests, fact_tool_events, fact_api_errors) — the API
 layer only shapes rows into response models.
 """
+
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 import asyncpg
 from fastapi import APIRouter, Depends, Query, Request
@@ -31,17 +31,13 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 @dataclass
 class DateRange:
-    start: Optional[datetime]
-    end: Optional[datetime]
+    start: datetime | None
+    end: datetime | None
 
 
 def date_range(
-    start_date: Optional[datetime] = Query(
-        None, description="Inclusive lower bound (ISO 8601)."
-    ),
-    end_date: Optional[datetime] = Query(
-        None, description="Exclusive upper bound (ISO 8601)."
-    ),
+    start_date: datetime | None = Query(None, description="Inclusive lower bound (ISO 8601)."),
+    end_date: datetime | None = Query(None, description="Exclusive upper bound (ISO 8601)."),
 ) -> DateRange:
     return DateRange(start=start_date, end=end_date)
 
@@ -104,9 +100,7 @@ async def cost_by_practice(
 
 
 @router.get("/cost-by-day", response_model=list[CostByDay])
-async def cost_by_day(
-    request: Request, range: DateRange = Depends(date_range)
-) -> list[CostByDay]:
+async def cost_by_day(request: Request, range: DateRange = Depends(date_range)) -> list[CostByDay]:
     """Daily spend and token usage, for a historical cost trend line."""
     pool: asyncpg.Pool = request.app.state.pool
     query = """
@@ -248,9 +242,7 @@ async def status_codes(
 
 
 @router.get("/session-stats", response_model=SessionStats)
-async def session_stats(
-    request: Request, range: DateRange = Depends(date_range)
-) -> SessionStats:
+async def session_stats(request: Request, range: DateRange = Depends(date_range)) -> SessionStats:
     """Fleet-wide session shape: duration, event/prompt counts, cost and tokens."""
     pool: asyncpg.Pool = request.app.state.pool
     query = """

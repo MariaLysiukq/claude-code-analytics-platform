@@ -1,6 +1,6 @@
 """Pydantic response models for the analytics/metrics endpoints."""
+
 from datetime import date
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -33,8 +33,8 @@ class ToolReliability(BaseModel):
     rejected_count: int
     success_count: int
     failure_count: int
-    acceptance_rate: Optional[float] = None
-    success_rate: Optional[float] = None
+    acceptance_rate: float | None = None
+    success_rate: float | None = None
     avg_duration_ms: float
 
 
@@ -59,7 +59,7 @@ class ErrorRatesResponse(BaseModel):
 
 
 class StatusCodeBreakdown(BaseModel):
-    status_code: Optional[int] = None
+    status_code: int | None = None
     error_count: int
 
 

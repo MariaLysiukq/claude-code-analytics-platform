@@ -22,6 +22,7 @@ def test_get_analytics_summary_success(client, mock_db_pool):
     assert response.status_code == 200
     assert response.json() == fake_db_data
 
+
 def test_invalid_endpoint_returns_404(client):
     """Тест звернення до неіснуючого ендпоінту."""
     response = client.get("/api/v1/analytics/non-existent-endpoint")

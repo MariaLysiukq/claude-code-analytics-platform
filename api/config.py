@@ -1,4 +1,5 @@
 """Environment/config loading for the FastAPI service."""
+
 from functools import lru_cache
 from pathlib import Path
 

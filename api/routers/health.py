@@ -1,4 +1,5 @@
 """Health check endpoint."""
+
 import logging
 
 import asyncpg

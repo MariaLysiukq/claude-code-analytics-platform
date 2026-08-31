@@ -1,9 +1,8 @@
 """Async PostgreSQL connection pool (asyncpg)."""
+
 import logging
-from typing import AsyncIterator
 
 import asyncpg
-from fastapi import Request
 
 from api.config import Settings
 

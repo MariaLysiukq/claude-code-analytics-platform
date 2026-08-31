@@ -5,9 +5,10 @@ architecture in PROJECT_PLAN.md section 4.4. Two personas are exposed as
 sidebar-selectable views: Executive/Finance (spend) and Developer/Engineering
 (token usage, tool reliability, API errors).
 """
+
 import os
 import time
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 import pandas as pd
 import plotly.express as px
@@ -23,23 +24,32 @@ CACHE_TTL_SECONDS = 60
 # Categorical palette (fixed order — see .claude dataviz skill / palette.md).
 # Never cycle: a chart with more series than slots folds extras into "Other".
 BLUE, ORANGE, AQUA, YELLOW, MAGENTA, GREEN, VIOLET, RED = (
-    "#2a78d6", "#eb6834", "#1baf7a", "#eda100",
-    "#e87ba4", "#008300", "#4a3aa7", "#e34948",
+    "#2a78d6",
+    "#eb6834",
+    "#1baf7a",
+    "#eda100",
+    "#e87ba4",
+    "#008300",
+    "#4a3aa7",
+    "#e34948",
 )
 STATUS_GOOD, STATUS_WARNING, STATUS_SERIOUS, STATUS_CRITICAL = (
-    "#0ca30c", "#fab219", "#ec835a", "#d03b3b",
+    "#0ca30c",
+    "#fab219",
+    "#ec835a",
+    "#d03b3b",
 )
 MUTED_INK = "#898781"
 FONT_FAMILY = "system-ui, -apple-system, 'Segoe UI', sans-serif"
 
-CHART_LAYOUT = dict(
-    template="plotly_white",
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(family=FONT_FAMILY, color="#52514e", size=13),
-    margin=dict(l=10, r=10, t=40, b=10),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
-)
+CHART_LAYOUT = {
+    "template": "plotly_white",
+    "paper_bgcolor": "rgba(0,0,0,0)",
+    "plot_bgcolor": "rgba(0,0,0,0)",
+    "font": {"family": FONT_FAMILY, "color": "#52514e", "size": 13},
+    "margin": {"l": 10, "r": 10, "t": 40, "b": 10},
+    "legend": {"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "left", "x": 0},
+}
 
 st.set_page_config(
     page_title="Claude Code Analytics",
@@ -51,6 +61,7 @@ st.set_page_config(
 # ---------------------------------------------------------------------------
 # API access — resilient to the API still starting up or being unreachable.
 # ---------------------------------------------------------------------------
+
 
 def _request(endpoint: str, params: dict) -> object:
     """Fetch one endpoint with a short retry loop. Raises on final failure."""
@@ -171,6 +182,7 @@ st.sidebar.caption("Leave blank to include the full dataset history.")
 # Executive / Finance view
 # ---------------------------------------------------------------------------
 
+
 def render_executive_view():
     st.title("Executive / Finance")
     st.caption("Spend overview across the fleet — cost trends, department and model breakdowns.")
@@ -179,8 +191,14 @@ def render_executive_view():
     cost_by_model = fetch("/analytics/cost-by-model", date_params, "cost by model")
     cost_by_practice = fetch("/analytics/cost-by-practice", date_params, "cost by practice")
 
-    total_spend = sum(row.get("total_cost_usd", 0.0) or 0.0 for row in cost_by_model) if cost_by_model else 0.0
-    total_requests = sum(row.get("request_count", 0) or 0 for row in cost_by_model) if cost_by_model else 0
+    total_spend = (
+        sum(row.get("total_cost_usd", 0.0) or 0.0 for row in cost_by_model)
+        if cost_by_model
+        else 0.0
+    )
+    total_requests = (
+        sum(row.get("request_count", 0) or 0 for row in cost_by_model) if cost_by_model else 0
+    )
     avg_cost = total_spend / total_requests if total_requests else 0.0
 
     col1, col2, col3 = st.columns(3)
@@ -193,10 +211,13 @@ def render_executive_view():
         df = pd.DataFrame(cost_by_day)
         df["activity_date"] = pd.to_datetime(df["activity_date"])
         fig = px.line(
-            df, x="activity_date", y="total_cost_usd", markers=True,
+            df,
+            x="activity_date",
+            y="total_cost_usd",
+            markers=True,
             labels={"activity_date": "Date", "total_cost_usd": "Cost (USD)"},
         )
-        fig.update_traces(line_color=BLUE, line_width=2, marker=dict(size=6, color=BLUE))
+        fig.update_traces(line_color=BLUE, line_width=2, marker={"size": 6, "color": BLUE})
         fig.update_traces(hovertemplate="%{x|%Y-%m-%d}<br>$%{y:,.2f}<extra></extra>")
         st.plotly_chart(style_fig(fig), use_container_width=True)
         with st.expander("View data as table"):
@@ -211,7 +232,10 @@ def render_executive_view():
         if cost_by_practice:
             df = pd.DataFrame(cost_by_practice).sort_values("total_cost_usd")
             fig = px.bar(
-                df, x="total_cost_usd", y="practice", orientation="h",
+                df,
+                x="total_cost_usd",
+                y="practice",
+                orientation="h",
                 text=df["total_cost_usd"].map(fmt_usd),
                 labels={"total_cost_usd": "Cost (USD)", "practice": ""},
             )
@@ -227,7 +251,10 @@ def render_executive_view():
         if cost_by_model:
             df = pd.DataFrame(cost_by_model).sort_values("total_cost_usd")
             fig = px.bar(
-                df, x="total_cost_usd", y="model", orientation="h",
+                df,
+                x="total_cost_usd",
+                y="model",
+                orientation="h",
                 text=df["total_cost_usd"].map(fmt_usd),
                 labels={"total_cost_usd": "Cost (USD)", "model": ""},
             )
@@ -243,6 +270,7 @@ def render_executive_view():
 # Developer / Engineering view
 # ---------------------------------------------------------------------------
 
+
 def render_engineering_view():
     st.title("Developer / Engineering")
     st.caption("Token usage, tool reliability, and API error health.")
@@ -257,8 +285,12 @@ def render_engineering_view():
         df = pd.DataFrame(cost_by_model)
         total_input = df["total_input_tokens"].sum() if "total_input_tokens" in df else 0
         total_output = df["total_output_tokens"].sum() if "total_output_tokens" in df else 0
-        total_cache_read = df["total_cache_read_tokens"].sum() if "total_cache_read_tokens" in df else 0
-        total_cache_creation = df["total_cache_creation_tokens"].sum() if "total_cache_creation_tokens" in df else 0
+        total_cache_read = (
+            df["total_cache_read_tokens"].sum() if "total_cache_read_tokens" in df else 0
+        )
+        total_cache_creation = (
+            df["total_cache_creation_tokens"].sum() if "total_cache_creation_tokens" in df else 0
+        )
 
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Input tokens", fmt_int(total_input))
@@ -272,21 +304,33 @@ def render_engineering_view():
             "cache_read_tokens": "Cache read",
             "cache_creation_tokens": "Cache creation",
         }
-        long_df = df.rename(columns={
-            "total_input_tokens": "input_tokens",
-            "total_output_tokens": "output_tokens",
-            "total_cache_read_tokens": "cache_read_tokens",
-            "total_cache_creation_tokens": "cache_creation_tokens",
-        }).melt(
-            id_vars=["model"], value_vars=[col for col in token_cols.keys() if col in df.columns or f"total_{col}" in df.columns],
-            var_name="token_type", value_name="tokens",
+        long_df = df.rename(
+            columns={
+                "total_input_tokens": "input_tokens",
+                "total_output_tokens": "output_tokens",
+                "total_cache_read_tokens": "cache_read_tokens",
+                "total_cache_creation_tokens": "cache_creation_tokens",
+            }
+        ).melt(
+            id_vars=["model"],
+            value_vars=[
+                col for col in token_cols if col in df.columns or f"total_{col}" in df.columns
+            ],
+            var_name="token_type",
+            value_name="tokens",
         )
         long_df["token_type"] = long_df["token_type"].map(token_cols)
         fig = px.bar(
-            long_df, x="model", y="tokens", color="token_type", barmode="group",
+            long_df,
+            x="model",
+            y="tokens",
+            color="token_type",
+            barmode="group",
             color_discrete_map={
-                "Input": BLUE, "Output": ORANGE,
-                "Cache read": AQUA, "Cache creation": YELLOW,
+                "Input": BLUE,
+                "Output": ORANGE,
+                "Cache read": AQUA,
+                "Cache creation": YELLOW,
             },
             labels={"model": "", "tokens": "Tokens", "token_type": ""},
         )
@@ -302,7 +346,10 @@ def render_engineering_view():
         if "success_rate" in df.columns:
             df = df[df["success_rate"].notna()].sort_values("success_rate")
             fig = px.bar(
-                df, x="success_rate", y="tool_name", orientation="h",
+                df,
+                x="success_rate",
+                y="tool_name",
+                orientation="h",
                 text=df["success_rate"].map(fmt_pct),
                 labels={"success_rate": "Success rate", "tool_name": ""},
             )
@@ -329,11 +376,14 @@ def render_engineering_view():
             if error_rates.get("by_type"):
                 df = pd.DataFrame(error_rates["by_type"]).sort_values("error_count")
                 fig = px.bar(
-                    df, x="error_count", y="error_type", orientation="h",
+                    df,
+                    x="error_count",
+                    y="error_type",
+                    orientation="h",
                     labels={"error_count": "Occurrences", "error_type": ""},
                 )
                 fig.update_traces(marker_color=BLUE)
-                fig.update_yaxes(tickfont=dict(size=11))
+                fig.update_yaxes(tickfont={"size": 11})
                 st.plotly_chart(style_fig(fig), use_container_width=True)
                 with st.expander("View data as table"):
                     st.dataframe(df, use_container_width=True, hide_index=True)
@@ -362,16 +412,17 @@ def render_engineering_view():
             df["color"] = df["status_code"].apply(status_color)
             df = df.sort_values("error_count")
             fig = px.bar(
-                df, x="error_count", y="status_label", orientation="h",
+                df,
+                x="error_count",
+                y="status_label",
+                orientation="h",
                 labels={"error_count": "Occurrences", "status_label": "Status code"},
             )
             fig.update_traces(marker_color=df["color"])
             st.plotly_chart(style_fig(fig), use_container_width=True)
             st.caption("Color: green = 2xx/3xx, amber = 4xx, red = 5xx, gray = unknown.")
             with st.expander("View data as table"):
-                st.dataframe(
-                    df.drop(columns=["color"]), use_container_width=True, hide_index=True
-                )
+                st.dataframe(df.drop(columns=["color"]), use_container_width=True, hide_index=True)
         else:
             st.info("No status code data for the selected range.")
 
