@@ -1,11 +1,9 @@
-# Build context: repo root (docker compose build context: .)
 FROM python:3.12-slim AS builder
 
 WORKDIR /app
 ENV PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-RUN pip install psycopg2-binary==2.9.9
 COPY etl/requirements.txt .
 RUN pip install --user -r requirements.txt
 
@@ -19,6 +17,7 @@ COPY --from=builder /root/.local /app/.local
 COPY etl ./etl
 
 ENV PATH=/app/.local/bin:$PATH \
+    PYTHONPATH=/app/.local/lib/python3.12/site-packages:$PYTHONPATH \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
