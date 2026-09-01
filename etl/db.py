@@ -1,6 +1,7 @@
 """Postgres connection + batched upsert helpers."""
 
 import logging
+import time
 
 import psycopg2
 from psycopg2.extras import execute_values
@@ -8,10 +9,24 @@ from psycopg2.extras import execute_values
 logger = logging.getLogger(__name__)
 
 
-def connect(database_url: str):
-    conn = psycopg2.connect(database_url)
-    conn.autocommit = False
-    return conn
+def connect(database_url: str, retries: int = 10, delay: float = 2.0):
+    for attempt in range(1, retries + 1):
+        try:
+            conn = psycopg2.connect(database_url)
+            conn.autocommit = False
+            logger.info("Successfully connected to PostgreSQL")
+            return conn
+        except psycopg2.OperationalError as exc:
+            if attempt == retries:
+                logger.error("Database connection failed after %d attempts.", retries)
+                raise exc
+            logger.warning(
+                "Database not ready yet (attempt %d/%d). Retrying in %.1fs...",
+                attempt,
+                retries,
+                delay,
+            )
+            time.sleep(delay)
 
 
 def execute_upsert(conn, sql: str, rows: list, page_size: int = 1000) -> int:
