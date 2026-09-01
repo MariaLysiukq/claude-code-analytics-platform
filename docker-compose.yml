@@ -23,6 +23,7 @@ services:
     build:
       context: .
       dockerfile: etl/Dockerfile
+    init: true
     env_file:
       - .env
     environment:
@@ -37,6 +38,7 @@ services:
     build:
       context: .
       dockerfile: api/Dockerfile
+    init: true
     env_file:
       - .env
     environment:
@@ -59,6 +61,7 @@ services:
     build:
       context: ./dashboard
       dockerfile: Dockerfile
+    init: true
     environment:
       API_BASE_URL: http://api:8000/api/v1
     ports:

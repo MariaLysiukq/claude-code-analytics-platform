@@ -40,13 +40,12 @@ from .models import (
 from .parsing import iter_parsed_events
 from .tool_reconciler import ToolEventReconciler
 
+logger = logging.getLogger("etl.load_data")
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
     datefmt="%H:%M:%S",
 )
-
-logger = logging.getLogger("etl.load_data")
 
 # ---------------------------------------------------------------------------
 # SQL
@@ -172,11 +171,13 @@ def parse_event_timestamp(attributes: dict, log_timestamp_ms):
             return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
         except ValueError:
             pass
+
     if log_timestamp_ms:
         try:
             return datetime.fromtimestamp(int(log_timestamp_ms) / 1000, tz=UTC)
         except (ValueError, OSError, OverflowError, TypeError):
             pass
+
     return None
 
 
@@ -244,7 +245,6 @@ def load_employees(conn, counters: Counters) -> set:
     n = db.execute_upsert(conn, UPSERT_EMPLOYEES_SQL, rows)
     counters.add_sent("dim_employees", n)
     conn.commit()
-    logger.info("dim_employees: loaded %d rows", n)
     return known_emails
 
 
@@ -438,82 +438,79 @@ def load_events(conn, counters: Counters, known_emails: set, batch_size: int) ->
             (pe.id, pe.body, session_id, email, ts, Json(pe.payload)),
         )
 
+        from typing import Any
+
+        attrs: Any
         try:
             if pe.event_type == "user_prompt":
-                prompt_attrs = UserPromptAttributes(**pe.attributes)
+                attrs = UserPromptAttributes(**pe.attributes)
                 flusher.add(
                     "fact_user_prompts",
-                    (
-                        pe.id,
-                        session_id,
-                        email,
-                        prompt_attrs.event_timestamp,
-                        prompt_attrs.prompt_length,
-                    ),
+                    (pe.id, session_id, email, attrs.event_timestamp, attrs.prompt_length),
                 )
 
             elif pe.event_type == "api_request":
-                req_attrs = ApiRequestAttributes(**pe.attributes)
+                attrs = ApiRequestAttributes(**pe.attributes)
                 flusher.add(
                     "fact_api_requests",
                     (
                         pe.id,
                         session_id,
                         email,
-                        req_attrs.event_timestamp,
-                        req_attrs.model,
-                        req_attrs.input_tokens,
-                        req_attrs.output_tokens,
-                        req_attrs.cache_read_tokens,
-                        req_attrs.cache_creation_tokens,
-                        req_attrs.cost_usd,
-                        req_attrs.duration_ms,
+                        attrs.event_timestamp,
+                        attrs.model,
+                        attrs.input_tokens,
+                        attrs.output_tokens,
+                        attrs.cache_read_tokens,
+                        attrs.cache_creation_tokens,
+                        attrs.cost_usd,
+                        attrs.duration_ms,
                     ),
                 )
 
             elif pe.event_type == "api_error":
-                err_attrs = ApiErrorAttributes(**pe.attributes)
+                attrs = ApiErrorAttributes(**pe.attributes)
                 flusher.add(
                     "fact_api_errors",
                     (
                         pe.id,
                         session_id,
                         email,
-                        err_attrs.event_timestamp,
-                        err_attrs.model,
-                        err_attrs.error,
-                        err_attrs.status_code,
-                        err_attrs.attempt,
-                        err_attrs.duration_ms,
+                        attrs.event_timestamp,
+                        attrs.model,
+                        attrs.error,
+                        attrs.status_code,
+                        attrs.attempt,
+                        attrs.duration_ms,
                     ),
                 )
 
             elif pe.event_type == "tool_decision":
-                dec_attrs = ToolDecisionAttributes(**pe.attributes)
+                attrs = ToolDecisionAttributes(**pe.attributes)
                 stale = reconciler.add_decision(
                     session_id,
                     {
                         "id": pe.id,
                         "session_id": session_id,
                         "user_email": email,
-                        "tool_name": dec_attrs.tool_name,
-                        "decision": dec_attrs.decision,
-                        "source": dec_attrs.source,
-                        "timestamp": dec_attrs.event_timestamp,
+                        "tool_name": attrs.tool_name,
+                        "decision": attrs.decision,
+                        "source": attrs.source,
+                        "timestamp": attrs.event_timestamp,
                     },
                 )
                 if stale:
                     flusher.add("fact_tool_events", _decision_only_row(stale))
 
             elif pe.event_type == "tool_result":
-                res_attrs = ToolResultAttributes(**pe.attributes)
-                matched, stale = reconciler.match_result(session_id, res_attrs.tool_name)
+                attrs = ToolResultAttributes(**pe.attributes)
+                matched, stale = reconciler.match_result(session_id, attrs.tool_name)
                 if stale:
                     flusher.add("fact_tool_events", _decision_only_row(stale))
                 if matched:
-                    row = _merged_tool_row(matched, pe, res_attrs, session_id, email)
+                    row = _merged_tool_row(matched, pe, attrs, session_id, email)
                 else:
-                    row = _result_only_row(pe, res_attrs, session_id, email)
+                    row = _result_only_row(pe, attrs, session_id, email)
                 flusher.add("fact_tool_events", row)
 
         except ValidationError as exc:
