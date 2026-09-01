@@ -5,6 +5,7 @@ WORKDIR /app
 ENV PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
+RUN pip install psycopg2-binary==2.9.9
 COPY etl/requirements.txt .
 RUN pip install --user -r requirements.txt
 
