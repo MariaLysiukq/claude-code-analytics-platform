@@ -91,8 +91,8 @@ docker compose up --build
 
 
 3. **Access application endpoints:**
-   text
-```
+```text
+
 | Service | URL | Description |
 | --- | --- | --- |
 | **Streamlit Dashboard** | [http://localhost:8501](http://localhost:8501) | Multi-persona analytics UI |
@@ -100,6 +100,7 @@ docker compose up --build
 | **API Base URL** | `http://localhost:8000/api/v1` | Application REST interface |
 | **API Health Check** | `http://localhost:8000/api/v1/health` | Container health probe |
 | **PostgreSQL Database** | `localhost:5432` | Primary datastore (see `.env`) |
+
 ```
 
 
