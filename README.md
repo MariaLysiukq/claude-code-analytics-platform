@@ -152,20 +152,20 @@ Once complete, open your Streamlit Cloud dashboard and click **Retry / refresh d
 │   └── Dockerfile          # Security-hardened container spec[cite: 1]
 ├── db/                     # Database initialization[cite: 1]
 │   └── init/
-│       └── 01_schema.sql   # SQLFluff-compliant PostgreSQL schema definition[cite: 1]
-├── etl/                    # Ingestion pipeline logic[cite: 1]
-│   ├── load_data.py        # Streamed bulk ingestion execution engine[cite: 1]
-│   ├── parsing.py          # Line-by-line JSONL streaming parser[cite: 1]
-│   ├── models.py           # Data normalization & Pydantic models[cite: 1]
-│   ├── tool_reconciler.py  # Stateful decision/result event merger[cite: 1]
+│       └── 01_schema.sql   # SQLFluff-compliant PostgreSQL schema definition
+├── etl/                    # Ingestion pipeline logic
+│   ├── load_data.py        # Streamed bulk ingestion execution engine
+│   ├── parsing.py          # Line-by-line JSONL streaming parser
+│   ├── models.py           # Data normalization & Pydantic models
+│   ├── tool_reconciler.py  # Stateful decision/result event merger
 │   └── config.py           # Configuration and environment variables
 ├── output/                 # Generated telemetry source data (local)
-├── .claude/skills/         # Pre-committed Claude Code CLI analytical skills[cite: 1]
-├── .github/workflows/      # GitHub Actions CI automation[cite: 1]
-│   └── pre-commit.yml      # Linter & type-checking workflow[cite: 1]
-├── .hadolint.yaml          # Hadolint Dockerfile rule configurations[cite: 1]
-├── .sqlfluff               # SQLFluff PostgreSQL dialect rules[cite: 1]
-└── .pre-commit-config.yaml # Git hook definitions (Ruff, Mypy, SQLFluff, Hadolint)[cite: 1]
+├── .claude/skills/         # Pre-committed Claude Code CLI analytical skills
+├── .github/workflows/      # GitHub Actions CI automation
+│   └── pre-commit.yml      # Linter & type-checking workflow
+├── .hadolint.yaml          # Hadolint Dockerfile rule configurations
+├── .sqlfluff               # SQLFluff PostgreSQL dialect rules
+└── .pre-commit-config.yaml # Git hook definitions (Ruff, Mypy, SQLFluff, Hadolint)
 
 ```
 
