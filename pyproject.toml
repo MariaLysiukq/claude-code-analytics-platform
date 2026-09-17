@@ -1,8 +1,9 @@
-# pyproject.toml
 [project]
 name = "claude-code-analytics"
 version = "0.1.0"
+dependencies = []
 
+# pyproject.toml
 [tool.ruff]
 # Target Python version matching the application runtime
 target-version = "py311"
