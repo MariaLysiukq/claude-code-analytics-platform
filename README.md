@@ -141,16 +141,16 @@ Once complete, open your Streamlit Cloud dashboard and click **Retry / refresh d
 
 ```text
 .
-├── api/                    # FastAPI web service[cite: 1]
-│   ├── main.py             # Application entrypoint & lifespan management[cite: 1]
-│   ├── database.py         # Asyncpg connection pooling setup[cite: 1]
-│   ├── routers/            # Analytical query routing modules[cite: 1]
-│   ├── schemas/            # Pydantic response models[cite: 1]
-│   └── Dockerfile          # Multi-stage build with JSON exec notation[cite: 1]
-├── dashboard/              # Streamlit frontend application[cite: 1]
-│   ├── app.py              # Visual components and state handling[cite: 1]
-│   └── Dockerfile          # Security-hardened container spec[cite: 1]
-├── db/                     # Database initialization[cite: 1]
+├── api/                    # FastAPI web service
+│   ├── main.py             # Application entrypoint & lifespan management
+│   ├── database.py         # Asyncpg connection pooling setup
+│   ├── routers/            # Analytical query routing modules
+│   ├── schemas/            # Pydantic response models
+│   └── Dockerfile          # Multi-stage build with JSON exec notation
+├── dashboard/              # Streamlit frontend application
+│   ├── app.py              # Visual components and state handling
+│   └── Dockerfile          # Security-hardened container spec
+├── db/                     # Database initialization
 │   └── init/
 │       └── 01_schema.sql   # SQLFluff-compliant PostgreSQL schema definition
 ├── etl/                    # Ingestion pipeline logic
