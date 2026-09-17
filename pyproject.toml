@@ -1,4 +1,7 @@
 # pyproject.toml
+[project]
+name = "claude-code-analytics"
+version = "0.1.0"
 
 [tool.ruff]
 # Target Python version matching the application runtime
