@@ -289,8 +289,8 @@ The FastAPI web service executes aggregate calculations in PostgreSQL rather tha
  |
 
 > All analytics endpoints support temporal filtering via optional ISO-8601 query parameters: `?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`.
-> 
-> 
+>
+>
 
 ---
 
