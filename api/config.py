@@ -15,6 +15,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    database_url: str | None = None
     postgres_user: str = "analytics"
     postgres_password: str = "changeme"
     postgres_db: str = "claude_code_analytics"

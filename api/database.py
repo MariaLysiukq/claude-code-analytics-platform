@@ -10,15 +10,22 @@ logger = logging.getLogger(__name__)
 
 
 async def create_pool(settings: Settings) -> asyncpg.Pool:
-    pool = await asyncpg.create_pool(
-        user=settings.postgres_user,
-        password=settings.postgres_password,
-        database=settings.postgres_db,
-        host=settings.postgres_host,
-        port=settings.postgres_port,
-        min_size=1,
-        max_size=10,
-    )
+    if settings.database_url:
+        pool = await asyncpg.create_pool(
+            dsn=settings.database_url,
+            min_size=1,
+            max_size=10,
+        )
+    else:
+        pool = await asyncpg.create_pool(
+            user=settings.postgres_user,
+            password=settings.postgres_password,
+            database=settings.postgres_db,
+            host=settings.postgres_host,
+            port=settings.postgres_port,
+            min_size=1,
+            max_size=10,
+        )
     logger.info("Postgres connection pool created")
     return pool
 
