@@ -87,7 +87,7 @@ An end-to-end, production-grade analytics platform built to ingest, process, sto
 ### 1. Cloud Infrastructure Setup
 
 1. **Database**: Create a PostgreSQL database on Neon.tech. Retrieve the connection string.
-2. **Backend**: Deploy the FastAPI app (`api/`) to Render using the provided `api/Dockerfile`. Set the `DATABASE_URL` environment variable (ensure it starts with `postgresql://`, not `postgresql+asyncpg://`).
+2. **Backend**: Deploy the FastAPI app (`api/`) to Render using the provided `api/Dockerfile`. Set the `DATABASE_URL` environment variable
 3. **Frontend**: Deploy the Streamlit app (`dashboard/app.py`) to Streamlit Cloud. In the app settings (Secrets), set `API_URL` to your new Render backend URL.
 
 ### 2. Local Environment & Data Generation
@@ -95,7 +95,7 @@ An end-to-end, production-grade analytics platform built to ingest, process, sto
 1. **Clone the repository and install dependencies:**
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/MariaLysiukq/claude-code-analytics-platform
 cd claude-code-analytics
 poetry install
 
@@ -105,14 +105,6 @@ poetry install
 
 ```bash
 cp .env.example .env
-
-```
-
-Update `.env` with your Neon database URL and local data path:
-
-```env
-DATABASE_URL=postgresql://[user]:[password]@[host]/[dbname]?sslmode=require
-ETL_DATA_DIR=output
 
 ```
 
