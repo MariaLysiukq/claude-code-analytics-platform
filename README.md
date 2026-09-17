@@ -84,6 +84,8 @@ An end-to-end, production-grade analytics platform built to ingest, process, sto
 * A [Render](https://render.com/) account (for FastAPI)
 * A [Streamlit Cloud](https://share.streamlit.io/) account (for the Dashboard)
 
+Check https://claude-code-analytics-platform1.streamlit.app/ 
+
 ### 1. Cloud Infrastructure Setup
 
 1. **Database**: Create a PostgreSQL database on Neon.tech. Retrieve the connection string.
@@ -412,9 +414,3 @@ All application configurations are managed via environment variables defined in 
 
 
 * **Environment Isolation**: Default deployment settings omit authentication gates, suitable for containerized local networks or private subnets.
-
-
-
-```
-
-```
