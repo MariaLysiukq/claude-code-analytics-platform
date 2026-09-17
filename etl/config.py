@@ -20,8 +20,7 @@ DATABASE_URL = os.environ.get(
     "DATABASE_URL",
     "postgresql://analytics:changeme@postgres:5432/claude_code_analytics",
 )
-
-DATA_DIR = Path(os.environ.get("ETL_DATA_DIR", REPO_ROOT / "data"))
+DATA_DIR = REPO_ROOT / "output"
 EMPLOYEES_CSV = Path(os.environ.get("ETL_EMPLOYEES_CSV", DATA_DIR / "employees.csv"))
 TELEMETRY_JSONL = Path(os.environ.get("ETL_TELEMETRY_JSONL", DATA_DIR / "telemetry_logs.jsonl"))
 
