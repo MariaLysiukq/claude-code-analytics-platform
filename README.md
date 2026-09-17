@@ -7,7 +7,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1.svg?logo=postgresql&logoColor=white)](https://www.postgresql.org)
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
-An end-to-end, production-grade analytics platform built to ingest, process, store, and visualize synthetic Claude Code CLI telemetry[cite: 1]. The platform features a **managed PostgreSQL** storage layer (Neon.tech), a **streaming ETL pipeline**, a **FastAPI** backend hosted on Render, and a multi-persona **Streamlit dashboard** deployed on Streamlit Cloud. Includes a pre-configured **Claude Code agent skill** for natural language SQL querying[cite: 1].
+An end-to-end, production-grade analytics platform built to ingest, process, store, and visualize synthetic Claude Code CLI telemetry. The platform features a **managed PostgreSQL** storage layer (Neon.tech), a **streaming ETL pipeline**, a **FastAPI** backend hosted on Render, and a multi-persona **Streamlit dashboard** deployed on Streamlit Cloud. Includes a pre-configured **Claude Code agent skill** for natural language SQL querying.
 
 ---
 
