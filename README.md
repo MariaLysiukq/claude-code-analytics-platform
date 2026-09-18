@@ -84,7 +84,7 @@ An end-to-end, production-grade analytics platform built to ingest, process, sto
 * A [Render](https://render.com/) account (for FastAPI)
 * A [Streamlit Cloud](https://share.streamlit.io/) account (for the Dashboard)
 
-Check https://claude-code-analytics-platform1.streamlit.app/ 
+Check https://claude-code-analytics-platform1.streamlit.app/
 
 ### 1. Cloud Infrastructure Setup
 
