@@ -1,33 +1,79 @@
-# Claude Code Usage Analytics Platform
+<p align="center">
+    <h1 align="center">Claude Code Usage Analytics Platform</h1>
+</p>
 
-[![Pre-Commit Hooks](https://github.com/<owner>/<repo>/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/pre-commit.yml)
+---
+
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-FF4B4B.svg?logo=streamlit&logoColor=white)](https://streamlit.io)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1.svg?logo=postgresql&logoColor=white)](https://www.postgresql.org)
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
-An end-to-end, production-grade analytics platform built to ingest, process, store, and visualize synthetic Claude Code CLI telemetry. The platform features a **managed PostgreSQL** storage layer (Neon.tech), a **streaming ETL pipeline**, a **FastAPI** backend hosted on Render, and a multi-persona **Streamlit dashboard** deployed on Streamlit Cloud. Includes a pre-configured **Claude Code agent skill** for natural language SQL querying.
+## What is Claude Code Analytics?
+
+An end-to-end cloud analytics platform for processing, analyzing, and visualizing Claude Code telemetry. It features a **managed PostgreSQL** storage layer (Neon.tech), a **FastAPI** backend hosted on Render, and a multi-persona **Streamlit dashboard** deployed on Streamlit Cloud. 
+
+The project includes a memory-efficient streaming ETL pipeline for data ingestion and a pre-configured **Claude Code agent skill** for natural language SQL querying.
+
+## Installation & Deployment
+
+- **Cloud Infrastructure**: Deploy the FastAPI app (`api/`) to [Render](https://render.com) and the Dashboard (`dashboard/app.py`) to [Streamlit Cloud](https://share.streamlit.io). Use [Neon.tech](https://neon.tech) for the PostgreSQL database.
+- **Local Setup**: Clone the repository and install dependencies using Poetry:
+  ```bash
+  poetry install
+
+  ```
+
+* **Data Generation**: Generate synthetic telemetry data locally (creates files in `output/`):
+```bash
+poetry run python generate_fake_data.py
+
+```
+
+
+* **Database Initialization & Load**: Initialize the schema and run the ETL pipeline to populate your Neon cloud database:
+```bash
+poetry run python -c "import psycopg2; from etl.config import DATABASE_URL; conn = psycopg2.connect(DATABASE_URL); conn.cursor().execute(open('db/init/01_schema.sql').read()); conn.commit();"
+poetry run python -m etl.load_data
+
+```
+
+
+
+## Screenshots
+
+Executive / Finance View <img width="1280" height="600" alt="зображення" src="https://github.com/user-attachments/assets/d3335499-c580-467c-9bd1-73cd90a89f28" />
+Developer / Engineering View <img width="1280" height="600" alt="зображення" src="https://github.com/user-attachments/assets/d3335499-c580-467c-9bd1-73cd90a89f28" />
+
+Analytics Dashboard
+The Streamlit interface (`dashboard/app.py`) provides two tailored persona views:
+* **Executive / Finance View**: Focuses on financial telemetry—total cost, daily spend trends, cost breakdown by engineering practice, and model efficiency.
+* **Developer / Engineering View**: Focuses on system performance—token consumption metrics, tool execution acceptance vs. failure rates, API error rates, and HTTP status code distributions.
+
+Features built-in date-range controls, client-side response caching (`st.cache_data`, 60s TTL), and retry options during API connection failures.
 
 ---
 
-## Table of Contents
+## AI Agent Integration
 
-- [Architecture Overview](#-architecture-overview)
-- [Quick Start](#-quick-start)
-- [Project Layout](#-project-layout)
-- [Database Schema & Architecture](#-database-schema--architecture)
-- [ETL Pipeline](#-etl-pipeline)
-- [REST API Reference](#-rest-api-reference)
-- [Analytics Dashboard](#-analytics-dashboard)
-- [AI Agent Integration](#-ai-agent-integration)
-- [Developer Experience & Code Quality](#-developer-experience--code-quality)
-- [Continuous Integration](#-continuous-integration)
-- [Configuration](#-configuration)
-- [Design Decisions & Tradeoffs](#-design-decisions--tradeoffs)
-- [Known Limitations](#-known-limitations)
+This repository includes a pre-committed Claude Code skill (`.claude/skills/telemetry-analytics/SKILL.md`). When opening this codebase inside Claude Code, you can execute natural language analytics queries directly:
 
----
+> "Which tool has the highest execution failure rate?"
+> "Show me the top 5 practice areas by API token usage over the last 7 days."
+
+## Development and contributions
+
+Code quality enforcement is managed via `pre-commit` hooks. We use **Ruff** for Python styling, **Mypy** for type checking, and **SQLFluff** for PostgreSQL dialect formatting.
+
+To set up your local build environment and test contributions:
+
+```bash
+pip install pre-commit sqlfluff ruff mypy
+pre-commit install
+pre-commit run --all-files
+
+```
 
 ## Architecture Overview
 
@@ -72,70 +118,6 @@ An end-to-end, production-grade analytics platform built to ingest, process, sto
 * **Claude Agent Skill**: Native `.claude/skills/telemetry-analytics` integration for context-aware conversational analytics.
 
 
-
----
-
-## Quick Start
-
-### Prerequisites
-
-* [Poetry](https://python-poetry.org/)
-* A [Neon.tech](https://neon.tech/) account (for PostgreSQL)
-* A [Render](https://render.com/) account (for FastAPI)
-* A [Streamlit Cloud](https://share.streamlit.io/) account (for the Dashboard)
-
-Check https://claude-code-analytics-platform1.streamlit.app/
-
-### 1. Cloud Infrastructure Setup
-
-1. **Database**: Create a PostgreSQL database on Neon.tech. Retrieve the connection string.
-2. **Backend**: Deploy the FastAPI app (`api/`) to Render using the provided `api/Dockerfile`. Set the `DATABASE_URL` environment variable
-3. **Frontend**: Deploy the Streamlit app (`dashboard/app.py`) to Streamlit Cloud. In the app settings (Secrets), set `API_URL` to your new Render backend URL.
-
-### 2. Local Environment & Data Generation
-
-1. **Clone the repository and install dependencies:**
-
-```bash
-git clone https://github.com/MariaLysiukq/claude-code-analytics-platform
-cd claude-code-analytics
-poetry install
-
-```
-
-2. **Configure your local `.env`:**
-
-```bash
-cp .env.example .env
-
-```
-
-3. **Generate synthetic data:**
-
-```bash
-poetry run python generate_fake_data.py
-
-```
-
-This will create `telemetry_logs.jsonl` and `employees.csv` in the `output/` directory.
-
-### 3. Database Initialization & Data Loading
-
-1. **Initialize the schema:**
-
-```bash
-poetry run python -c "import psycopg2; from etl.config import DATABASE_URL; conn = psycopg2.connect(DATABASE_URL); conn.cursor().execute(open('db/init/01_schema.sql').read()); conn.commit(); print('Schema created!')"
-
-```
-
-2. **Run the ETL pipeline to populate the cloud database:**
-
-```bash
-poetry run python -m etl.load_data
-
-```
-
-Once complete, open your Streamlit Cloud dashboard and click **Retry / refresh data**.
 
 ---
 
@@ -254,129 +236,18 @@ The FastAPI web service executes aggregate calculations in PostgreSQL rather tha
 
 | Method | Endpoint | Description |
 | --- | --- | --- |
-| `GET` | `/api/v1/health` | System and DB connectivity probe (returns `200` or `503`).
-
- |
-| `GET` | `/api/v1/analytics/cost-by-model` | Spend, token breakdown, and latency metrics grouped by LLM model.
-
- |
-| `GET` | `/api/v1/analytics/cost-by-practice` | Session count, token volume, and financial spend by practice.
-
- |
-| `GET` | `/api/v1/analytics/cost-by-day` | Daily spend and volume timeseries data.
-
- |
-| `GET` | `/api/v1/analytics/tool-reliability` | Per-tool acceptance rate, success rate, and duration statistics.
-
- |
-| `GET` | `/api/v1/analytics/active-users` | Daily Active Users (DAU) and total active session counts.
-
- |
-| `GET` | `/api/v1/analytics/error-rates` | API failure rates and error category breakdowns.
-
- |
-| `GET` | `/api/v1/analytics/status-codes` | HTTP status code distributions across API request failures.
-
- |
-| `GET` | `/api/v1/analytics/session-stats` | Fleet-wide average and median session shapes.
-
- |
-
+| `GET` | `/api/v1/health` | System and DB connectivity probe (returns `200` or `503`). |
+| `GET` | `/api/v1/analytics/cost-by-model` | Spend, token breakdown, and latency metrics grouped by LLM model. |
+| `GET` | `/api/v1/analytics/cost-by-practice` | Session count, token volume, and financial spend by practice. |
+| `GET` | `/api/v1/analytics/cost-by-day` | Daily spend and volume timeseries data. |
+| `GET` | `/api/v1/analytics/tool-reliability` | Per-tool acceptance rate, success rate, and duration statistics. |
+| `GET` | `/api/v1/analytics/active-users` | Daily Active Users (DAU) and total active session counts. |
+| `GET` | `/api/v1/analytics/error-rates` | API failure rates and error category breakdowns. |
+| `GET` | `/api/v1/analytics/status-codes` | HTTP status code distributions across API request failures. |
+| `GET` | `/api/v1/analytics/session-stats` | Fleet-wide average and median session shapes. |
 > All analytics endpoints support temporal filtering via optional ISO-8601 query parameters: `?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`.
 >
 >
-
----
-
-## Analytics Dashboard
-
-The Streamlit interface (`dashboard/app.py`) provides two tailored persona views:
-
-* **Executive / Finance View**: Focuses on financial telemetry—total cost, daily spend trends, cost breakdown by engineering practice, and model efficiency.
-
-
-* **Developer / Engineering View**: Focuses on system performance—token consumption metrics, tool execution acceptance vs. failure rates, API error rates, and HTTP status code distributions.
-
-
-
-Features built-in date-range controls, client-side response caching (`st.cache_data`, 60s TTL), and retry options during API connection failures.
-
----
-
-## AI Agent Integration
-
-This repository includes a pre-committed Claude Code skill located at `.claude/skills/telemetry-analytics/SKILL.md`.
-
-When opening this codebase inside Claude Code, the assistant automatically loads schema information and query recipes. You can execute natural language analytics queries directly:
-
-```text
-> "Which tool has the highest execution failure rate?"
-> "Show me the top 5 practice areas by API token usage over the last 7 days."
-
-```
-
-## Developer Experience & Code Quality
-
-Code quality enforcement is managed via `pre-commit` hooks, ensuring all code meets defined styling and safety requirements prior to commit.
-
-### Local Tooling Setup
-
-1. **Install Python linter dependencies:**
-
-```bash
-pip install pre-commit sqlfluff ruff mypy
-
-```
-
-2. **Install pre-commit hooks:**
-
-```bash
-pre-commit install
-
-```
-
-3. **Run checks across all files:**
-
-```bash
-pre-commit run --all-files
-
-```
-
-### Quality Assurance Standards
-
-* **Python Styling (`Ruff`)**: Enforces clean import order (`E402`), dictionary instantiation syntax (`C408`), double quotes, and modern Python standards.
-
-
-* **Type Checking (`Mypy`)**: Validates type hints across `api/`, `dashboard/`, and `etl/`.
-
-
-* **SQL Formatting (`SQLFluff`)**: Configured via `.sqlfluff` to enforce lowercase identifiers and uppercase keywords against the PostgreSQL dialect.
-
-
-* **Dockerfile Linting (`Hadolint`)**: Configured via `.hadolint.yaml` to enforce JSON array syntax for `CMD` / `ENTRYPOINT` directives and override non-numeric UID checks (`DL3066`).
-
-
-
----
-
-## Continuous Integration
-
-Every `push` to `main` and all incoming `pull_request` events trigger the automated test pipeline defined in `.github/workflows/pre-commit.yml`.
-
-The CI runner automatically:
-
-1. Provisions Python 3.11.
-
-
-2. Installs the `hadolint` static analyzer directly from GitHub Releases.
-
-
-3. Installs `ruff`, `mypy`, `sqlfluff`, and `pre-commit`.
-
-
-4. Executes all hook validations against the workspace.
-
-
 
 ---
 
@@ -384,33 +255,7 @@ The CI runner automatically:
 
 All application configurations are managed via environment variables defined in `.env`:
 
-| Variable | Description |
-| --- | --- |
-| `DATABASE_URL` | PostgreSQL connection string (Neon.tech) |
-| `API_URL` | FastAPI backend URL (used by Streamlit Cloud) |
-| `ETL_BATCH_SIZE` | Number of rows per bulk database insert (default 2000) |
-| `ETL_LOG_EVERY_N_LINES` | Telemetry progress logging interval (default 1000) |
-| `ETL_DATA_DIR` | Directory containing source files (e.g., `output`) |
+* `DATABASE_URL`: PostgreSQL connection string (Neon.tech)
+* `API_URL`: FastAPI backend URL (used by Streamlit Cloud)
+* `ETL_DATA_DIR`: Directory containing source files (e.g., `output`)
 
-## Design Decisions & Tradeoffs
-
-* **Two-Layer Data Model**: Storing raw JSONB alongside star schema tables trades storage space for schema flexibility, ensuring unpromoted payload attributes can be queried without re-reading source log files.
-
-
-* **Decoupled Architecture**: Routing Dashboard queries exclusively through the FastAPI service enforces business logic centralization and API reusability.
-
-
-* **Load-Time Tool Reconciliation**: Joining tool decisions and result events during ingestion eliminates complex, costly self-joins at query time.
-
-
-* **Cloud-First Deployment:** Shifting from local Docker Compose to managed services (Neon, Render, Streamlit Cloud) simplifies production operations but introduces external dependencies and potential network latency.
-
-## Known Limitations
-
-* **Synthetic Data**: Telemetry inputs are generated programmatically for demonstration purposes.
-
-
-* **Sequential Tool Execution**: Reconciler logic assumes tool execution events occur sequentially per session.
-
-
-* **Environment Isolation**: Default deployment settings omit authentication gates, suitable for containerized local networks or private subnets.
