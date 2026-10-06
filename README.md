@@ -258,4 +258,3 @@ All application configurations are managed via environment variables defined in 
 * `DATABASE_URL`: PostgreSQL connection string (Neon.tech)
 * `API_URL`: FastAPI backend URL (used by Streamlit Cloud)
 * `ETL_DATA_DIR`: Directory containing source files (e.g., `output`)
-
