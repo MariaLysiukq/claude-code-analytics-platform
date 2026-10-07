@@ -12,7 +12,7 @@
 
 ## What is Claude Code Analytics?
 
-An end-to-end cloud analytics platform for processing, analyzing, and visualizing Claude Code telemetry. It features a **managed PostgreSQL** storage layer (Neon.tech), a **FastAPI** backend hosted on Render, and a multi-persona **Streamlit dashboard** deployed on Streamlit Cloud. 
+An end-to-end cloud analytics platform for processing, analyzing, and visualizing Claude Code telemetry. It features a **managed PostgreSQL** storage layer (Neon.tech), a **FastAPI** backend hosted on Render, and a multi-persona **Streamlit dashboard** deployed on Streamlit Cloud.
 
 The project includes a memory-efficient streaming ETL pipeline for data ingestion and a pre-configured **Claude Code agent skill** for natural language SQL querying.
 
