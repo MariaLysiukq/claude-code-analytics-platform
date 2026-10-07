@@ -44,7 +44,9 @@ poetry run python -m etl.load_data
 ## Screenshots
 
 Executive / Finance View <img width="1280" height="600" alt="зображення" src="https://github.com/user-attachments/assets/d3335499-c580-467c-9bd1-73cd90a89f28" />
-Developer / Engineering View <img width="1280" height="600" alt="зображення" src="https://github.com/user-attachments/assets/d3335499-c580-467c-9bd1-73cd90a89f28" />
+Developer / Engineering View <img width="1280" height="619" alt="зображення" src="https://github.com/user-attachments/assets/66e4b61a-e34d-4a91-b940-8416ec578e86" />
+
+
 
 Analytics Dashboard
 The Streamlit interface (`dashboard/app.py`) provides two tailored persona views:
