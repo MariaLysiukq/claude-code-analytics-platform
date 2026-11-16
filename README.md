@@ -27,7 +27,7 @@ The project includes a memory-efficient streaming ETL pipeline for data ingestio
 
 * **Data Generation**: Generate synthetic telemetry data locally (creates files in `output/`):
 ```bash
-poetry run python generate_fake_data.py
+poetry run python data/generate_fake_data.py
 
 ```
 
@@ -259,4 +259,8 @@ All application configurations are managed via environment variables defined in 
 
 * `DATABASE_URL`: PostgreSQL connection string (Neon.tech)
 * `API_URL`: FastAPI backend URL (used by Streamlit Cloud)
-* `ETL_DATA_DIR`: Directory containing source files (e.g., `output`)
+* `ETL_EMPLOYEES_CSV` / `ETL_TELEMETRY_JSONL`: Paths to the source files (default: `output/employees.csv` and `output/telemetry_logs.jsonl`)
+
+## License
+
+[MIT](LICENSE)
